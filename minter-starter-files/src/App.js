@@ -1,10 +1,15 @@
-import './App.css';
-import Minter from './Minter'
+import MyRouts from "./routers/routes";
+import { useMoralis } from "react-moralis";
+import { useEffect } from "react";
 
 function App() {
+  const { enableWeb3 } = useMoralis();
+  useEffect(() => {
+    enableWeb3();
+  }, []);
   return (
     <div className="App">
-      <Minter></Minter>
+      <MyRouts />
     </div>
   );
 }
