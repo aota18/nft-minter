@@ -57,10 +57,10 @@ const Create = () => {
 
     const contractABI = require("../../contracts/artifacts/contracts/Collection.sol/Collection.json");
     const abi = contractABI.abi;
-    window.contract = await new web3.eth.Contract(abi, contractAddress_goerli);
+    window.contract = await new web3.eth.Contract(abi, contractAddress_mumbai);
 
     const transactionParameters = {
-      to: contractAddress_goerli,
+      to: contractAddress_mumbai,
       from: window.ethereum.selectedAddress,
       data: window.contract.methods
         .mint(
