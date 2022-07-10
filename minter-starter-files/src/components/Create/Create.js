@@ -1,8 +1,19 @@
+import { createAlchemyWeb3 } from "@alch/alchemy-web3";
 import React, { Component, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Web3 from "web3";
+import { useIpfs } from "../../hooks/useIpfs";
+import { pinJSONToIPFS } from "../../utils/pinata";
+
+const contractAddress_mumbai = "0xfD94703371dbbb562B2EE64C29F2F58e9101b3A9";
+const contractAddress_goerli = "0x3F543Dc0c4BA69a1ea7518A76e9537F28B81bCF3";
+const ipfsBaseUrl = "ipfs://";
 
 const Create = () => {
+  const web3 = createAlchemyWeb3(process.env.REACT_APP_ALCHEMY_KEY);
   const navigate = useNavigate();
+
+  const { ipfs } = useIpfs();
 
   const fileRef = useRef(null);
   const [image, setImage] = useState({});
@@ -24,9 +35,56 @@ const Create = () => {
 
     const file = files[0];
     // TODO : Check file: type, size, mime type
-    const result = {};
+    const result = await ipfs.add(file);
+
     setUploadedFile(file);
     setItem({ ...item, path: result.path });
+  };
+
+  const mintNFT = async () => {
+    // TODO: Input Validation
+
+    const name = item.name;
+    const description = item.description;
+    const imageURI = ipfsBaseUrl + item.path;
+    const properties = JSON.stringify({
+      trait_type: "Base",
+      value: "Starfish",
+    });
+
+    const currentTokenId = 1;
+
+    const contractABI = require("../../contracts/artifacts/contracts/Collection.sol/Collection.json");
+    const abi = contractABI.abi;
+    window.contract = await new web3.eth.Contract(abi, contractAddress_goerli);
+
+    console.log(window.ethereum.selectedAddress);
+
+    const transactionParameters = {
+      to: contractAddress_goerli,
+      from: window.ethereum.selectedAddress,
+      data: window.contract.methods
+        .mint(
+          window.ethereum.selectedAddress,
+          1,
+          imageURI,
+          name,
+          description,
+          properties
+        )
+        .encodeABI(),
+    };
+
+    try {
+      const txHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [transactionParameters],
+      });
+
+      console.log("success", txHash);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -105,6 +163,7 @@ const Create = () => {
                   <button
                     className="btn w-100 mt-3 mt-sm-4"
                     onClick={(e) => {
+                      mintNFT();
                       e.preventDefault();
                     }}
                     disabled={loading ? true : false}

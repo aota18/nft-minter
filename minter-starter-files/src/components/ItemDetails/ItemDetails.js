@@ -1,6 +1,7 @@
+import { createAlchemyWeb3 } from "@alch/alchemy-web3";
 import React, { useEffect, useState } from "react";
 import { useMoralis, useMoralisWeb3Api } from "react-moralis";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { defaultImg, defaultProfileImg, sliceOver } from "../../utils/util";
 
 const initData = {
@@ -88,9 +89,14 @@ const sellerData = [
   },
 ];
 
+const stakingContractAddress = "0xCAA609D0DeCa826BcDc4bc7688299B0fD68C074E";
+const collectionContractAddress = "0xAdB9fe0E415e4C8Ef41C4d0cC20C77e1cf55DE3F";
+
 const ItemDetails = () => {
+  const web3 = createAlchemyWeb3(process.env.REACT_APP_ALCHEMY_KEY);
   const { id } = useParams();
 
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
@@ -117,16 +123,72 @@ const ItemDetails = () => {
       const options = {
         address: tokenAddress,
         token_id: tokenId,
-        chain: "goerli",
+        chain: "mumbai",
       };
       const result = await Web3Api.token.getTokenIdMetadata(options);
+      console.log(result);
       setBasicData(result);
-      const metadata = JSON.parse(result.metadata);
-      setMetadata(metadata);
+
+      if (result.metadata) {
+        const metadata = JSON.parse(result.metadata);
+        setMetadata(metadata);
+      }
+
       setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
       setError(err);
+    }
+  };
+
+  const approveAddress = async (address, tokenId) => {
+    const contractABI = require("../../contracts/artifacts/contracts/Collection.sol/Collection.json");
+    const abi = contractABI.abi;
+    window.contract = await new web3.eth.Contract(
+      abi,
+      collectionContractAddress
+    );
+
+    const transactionParameters = {
+      to: collectionContractAddress,
+      from: window.ethereum.selectedAddress,
+      data: window.contract.methods.approve(address, tokenId).encodeABI(),
+    };
+
+    try {
+      const txHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [transactionParameters],
+      });
+
+      console.log("success to approve this token Id", txHash);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const stakeNFT = async () => {
+    const contractABI = require("../../contracts/artifacts/contracts/NFTStaking.sol/NFTStaking.json");
+    const abi = contractABI.abi;
+    window.contract = await new web3.eth.Contract(abi, stakingContractAddress);
+
+    console.log(window.contract, parseInt(tokenId));
+    console.log([parseInt(tokenId)]);
+    const transactionParameters = {
+      to: stakingContractAddress,
+      from: window.ethereum.selectedAddress,
+      data: window.contract.methods.stake([parseInt(tokenId)]).encodeABI(),
+    };
+
+    try {
+      const txHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [transactionParameters],
+      });
+
+      console.log("success to stake", txHash);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -274,35 +336,30 @@ const ItemDetails = () => {
                   </li>
                 </ul>
               </div>
-              <div className="row items">
-                {init.sellerData.map((item, idx) => {
-                  return (
-                    <div
-                      key={`sd_${idx}`}
-                      className="col-12 col-md-6 item px-lg-2"
-                    >
-                      <div className="card no-hover">
-                        <div className="single-seller d-flex align-items-center">
-                          <a href="/author">
-                            <img
-                              className="avatar-md rounded-circle"
-                              src={item.img}
-                              alt=""
-                            />
-                          </a>
-                          {/* Seller Info */}
-                          <div className="seller-info ml-3">
-                            <a className="seller mb-2" href="/author">
-                              {item.seller}
-                            </a>
-                            <span>{item.post}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {basicData.owner_of === window.ethereum.selectedAddress ? (
+                <div className="row items">
+                  <a
+                    className="btn btn-bordered-white m-4"
+                    onClick={() => {
+                      let answer = window.confirm(
+                        "Do you want to stake this token?"
+                      );
+
+                      if (answer) {
+                        approveAddress(stakingContractAddress, tokenId);
+                        stakeNFT();
+
+                        navigate("/rewards");
+                      }
+                    }}
+                  >
+                    <i className="icon-pin mr-2" />
+                    {"Stake"}
+                  </a>
+                </div>
+              ) : (
+                <></>
+              )}
             </div>
           </div>
         </div>
