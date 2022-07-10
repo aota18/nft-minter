@@ -10,6 +10,7 @@ const contractAddress_goerli = "0x3F543Dc0c4BA69a1ea7518A76e9537F28B81bCF3";
 const ipfsBaseUrl = "ipfs://";
 
 const Create = () => {
+  console.log("create");
   const web3 = createAlchemyWeb3(process.env.REACT_APP_ALCHEMY_KEY);
   const navigate = useNavigate();
 
