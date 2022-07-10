@@ -17,7 +17,7 @@ const ExploreOne = () => {
   const { isWeb3Enabled } = useMoralis();
 
   const fetchSearchNFTs = async () => {
-    const options = { q: "ape", chain: "goerli", filter: "global", limit: 20 };
+    const options = { q: "ape", chain: "mumbai", filter: "global", limit: 20 };
     const NFTs = await Web3Api.token.searchNFTs(options);
 
     console.log(NFTs.result);

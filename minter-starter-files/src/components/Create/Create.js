@@ -58,8 +58,6 @@ const Create = () => {
     const abi = contractABI.abi;
     window.contract = await new web3.eth.Contract(abi, contractAddress_goerli);
 
-    console.log(window.ethereum.selectedAddress);
-
     const transactionParameters = {
       to: contractAddress_goerli,
       from: window.ethereum.selectedAddress,
@@ -82,6 +80,8 @@ const Create = () => {
       });
 
       console.log("success", txHash);
+
+      navigate("/author");
     } catch (error) {
       console.log(error);
     }
