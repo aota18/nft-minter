@@ -1188,9 +1188,9 @@ contract Collection is ERC721Enumerable, Ownable {
             require(_mintAmount <= maxMintAmount);
             require(supply + _mintAmount <= maxSupply);
             
-            if (msg.sender != owner()) {
-            require(msg.value == cost * _mintAmount, "Need to send 0.08 ether!");
-            }
+            // if (msg.sender != owner()) {
+            // require(msg.value == cost * _mintAmount, "Need to send 0.08 ether!");
+            // }
             
             for (uint256 i = 1; i <= _mintAmount; i++) {
                 _safeMint(_to, supply + i);

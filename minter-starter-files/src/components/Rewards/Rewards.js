@@ -124,7 +124,13 @@ const Rewards = () => {
                         <a
                           href="#"
                           onClick={() => {
-                            unstake(item.token_id);
+                            let answer = window.confirm(
+                              "Do you want to unstake this token?"
+                            );
+
+                            if (answer) {
+                              unstake(item.token_id);
+                            }
                           }}
                         >
                           <h5 className="mb-0">{meta.name}</h5>

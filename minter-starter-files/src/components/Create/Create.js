@@ -47,7 +47,6 @@ const Create = () => {
 
   const mintNFT = async () => {
     // TODO: Input Validation
-
     const contractAddress = process.env.REACT_APP_COLLECTION_ADDRESS;
     const stakingAddress = process.env.REACT_APP_STAKING_ADDRESS;
 
@@ -61,6 +60,7 @@ const Create = () => {
 
     const contractABI = require("../../contracts/artifacts/contracts/Collection.sol/Collection.json");
     const abi = contractABI.abi;
+
     window.contract = await new web3.eth.Contract(abi, contractAddress);
 
     let transactionParameters = {
@@ -192,7 +192,7 @@ const Create = () => {
                   <button
                     className="btn w-100 mt-3 mt-sm-4"
                     onClick={(e) => {
-                      console.log("clicked");
+                      // window.ethereum.enable();
                       mintNFT();
                       e.preventDefault();
                     }}
