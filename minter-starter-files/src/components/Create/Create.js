@@ -1,16 +1,11 @@
 import { createAlchemyWeb3 } from "@alch/alchemy-web3";
-import React, { Component, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Web3 from "web3";
 import { useIpfs } from "../../hooks/useIpfs";
-import { pinJSONToIPFS } from "../../utils/pinata";
 
-const contractAddress_mumbai = "0xfD94703371dbbb562B2EE64C29F2F58e9101b3A9";
-const contractAddress_goerli = "0x3F543Dc0c4BA69a1ea7518A76e9537F28B81bCF3";
 const ipfsBaseUrl = "ipfs://";
 
 const Create = () => {
-  console.log("create");
   const web3 = createAlchemyWeb3(process.env.REACT_APP_ALCHEMY_KEY);
   const navigate = useNavigate();
 
@@ -18,6 +13,7 @@ const Create = () => {
 
   const fileRef = useRef(null);
   const [image, setImage] = useState({});
+  const [isFileUploading, setIsFileUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [item, setItem] = useState({
     name: "",
@@ -33,17 +29,27 @@ const Create = () => {
     if (!files || files.length === 0) {
       return alert("No files selected");
     }
-
     const file = files[0];
-    // TODO : Check file: type, size, mime type
-    const result = await ipfs.add(file);
 
-    setUploadedFile(file);
-    setItem({ ...item, path: result.path });
+    try {
+      setIsFileUploading(true);
+      // TODO : Check file: type, size, mime type
+      const result = await ipfs.add(file);
+      setUploadedFile(file);
+      setItem({ ...item, path: result.path });
+      setIsFileUploading(false);
+    } catch (e) {
+      alert(e);
+      console.log(e);
+      setIsFileUploading(false);
+    }
   };
 
   const mintNFT = async () => {
     // TODO: Input Validation
+
+    const contractAddress = process.env.REACT_APP_COLLECTION_ADDRESS;
+    const stakingAddress = process.env.REACT_APP_STAKING_ADDRESS;
 
     const name = item.name;
     const description = item.description;
@@ -53,14 +59,12 @@ const Create = () => {
       value: "Starfish",
     });
 
-    const currentTokenId = 1;
-
     const contractABI = require("../../contracts/artifacts/contracts/Collection.sol/Collection.json");
     const abi = contractABI.abi;
-    window.contract = await new web3.eth.Contract(abi, contractAddress_mumbai);
+    window.contract = await new web3.eth.Contract(abi, contractAddress);
 
-    const transactionParameters = {
-      to: contractAddress_mumbai,
+    let transactionParameters = {
+      to: contractAddress,
       from: window.ethereum.selectedAddress,
       data: window.contract.methods
         .mint(
@@ -75,12 +79,29 @@ const Create = () => {
     };
 
     try {
-      const txHash = await window.ethereum.request({
+      console.log(
+        "===here====",
+        window.ethereum.selectedAddress,
+        window.contract
+      );
+      await window.ethereum.request({
         method: "eth_sendTransaction",
         params: [transactionParameters],
       });
 
-      console.log("success", txHash);
+      transactionParameters = {
+        to: contractAddress,
+        from: window.ethereum.selectedAddress,
+        data: window.contract.methods
+          .setApprovalForAll(stakingAddress, true)
+          .encodeABI(),
+      };
+
+      // Set Approval for all of transaction
+      await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [transactionParameters],
+      });
 
       navigate("/author");
     } catch (error) {
@@ -112,19 +133,26 @@ const Create = () => {
                 <div className="col-12">
                   <div className="input-group form-group">
                     <div className="custom-file">
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        className="custom-file-input"
-                        onChange={onFileUpload}
-                        id="inputGroupFile01"
-                      />
-                      <label
-                        className="custom-file-label"
-                        htmlFor="inputGroupFile01"
-                      >
-                        {uploadedFile ? uploadedFile.name : "Browse"}
-                      </label>
+                      {isFileUploading ? (
+                        <div>Loading ... </div>
+                      ) : (
+                        <>
+                          {" "}
+                          <input
+                            ref={fileRef}
+                            type="file"
+                            className="custom-file-input"
+                            onChange={onFileUpload}
+                            id="inputGroupFile01"
+                          />
+                          <label
+                            className="custom-file-label"
+                            htmlFor="inputGroupFile01"
+                          >
+                            {uploadedFile ? uploadedFile.name : "Browse"}
+                          </label>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -164,6 +192,7 @@ const Create = () => {
                   <button
                     className="btn w-100 mt-3 mt-sm-4"
                     onClick={(e) => {
+                      console.log("clicked");
                       mintNFT();
                       e.preventDefault();
                     }}

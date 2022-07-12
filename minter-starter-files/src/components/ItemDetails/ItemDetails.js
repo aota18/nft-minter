@@ -89,8 +89,8 @@ const sellerData = [
   },
 ];
 
-const stakingContractAddress = "0xCAA609D0DeCa826BcDc4bc7688299B0fD68C074E";
-const collectionContractAddress = "0xAdB9fe0E415e4C8Ef41C4d0cC20C77e1cf55DE3F";
+const stakingContractAddress = process.env.REACT_APP_STAKING_ADDRESS;
+const collectionContractAddress = process.env.REACT_APP_COLLECTION_ADDRESS;
 
 const ItemDetails = () => {
   const web3 = createAlchemyWeb3(process.env.REACT_APP_ALCHEMY_KEY);
@@ -123,7 +123,7 @@ const ItemDetails = () => {
       const options = {
         address: tokenAddress,
         token_id: tokenId,
-        chain: "mumbai",
+        chain: process.env.REACT_APP_CHAIN,
       };
       const result = await Web3Api.token.getTokenIdMetadata(options);
       console.log(result);
@@ -346,7 +346,6 @@ const ItemDetails = () => {
                       );
 
                       if (answer) {
-                        approveAddress(stakingContractAddress, tokenId);
                         stakeNFT();
 
                         navigate("/rewards");

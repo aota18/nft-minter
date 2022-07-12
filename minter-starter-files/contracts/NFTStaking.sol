@@ -31,9 +31,17 @@ contract NFTStaking is Ownable, IERC721Receiver {
    constructor(ERC721Enumerable _nft, N2DRewards _token) { 
     nft = _nft;
     token = _token;
+
+    // Approve all tokens in NFT
+    nft.setApprovalForAll(address(this), true);
+  
   }
 
   function stake(uint256[] calldata tokenIds) external {
+
+     // Approve all tokens in NFT
+    nft.setApprovalForAll(address(this), true);
+    
     uint256 tokenId;
     totalStaked += tokenIds.length;
     for (uint i = 0; i < tokenIds.length; i++) {

@@ -61,50 +61,26 @@ const Header = () => {
               </a>
             </li>
             <li className="nav-item dropdown">
-              <a className="nav-link" href="#">
-                Explore <i className="fas fa-angle-down ml-1" />
+              <a className="nav-link" href="/explore-1">
+                Explore
               </a>
-              <ul className="dropdown-menu">
-                <li className="nav-item">
-                  <a href="/explore-1" className="nav-link">
-                    Explore
-                  </a>
-                </li>
-
-                <li className="nav-item">
-                  <a href="/auctions" className="nav-link">
-                    Live Auctions
-                  </a>
-                </li>
-              </ul>
             </li>
-            <li className="nav-item">
+            <li className="nav-item dropdown">
               <a href="/rewards" className="nav-link">
                 Rewards
               </a>
             </li>
 
             <li className="nav-item dropdown">
-              <a className="nav-link" href="#">
-                Pages <i className="fas fa-angle-down ml-1" />
+              <a className="nav-link" href="/create">
+                Create
               </a>
-              <ul className="dropdown-menu">
-                <li className="nav-item">
-                  <a href="/author" className="nav-link">
-                    Profile
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a onClick={() => login()} className="nav-link">
-                    {!isAuthenticated ? "Wallet Connect" : "Logout"}
-                  </a>
-                </li>
-                <li className="nav-item">
-                  <a href="/create" className="nav-link">
-                    Create
-                  </a>
-                </li>
-              </ul>
+            </li>
+
+            <li className="nav-item dropdown">
+              <a className="nav-link" href="/author">
+                My NFT
+              </a>
             </li>
           </ul>
           {/* Navbar Icons */}

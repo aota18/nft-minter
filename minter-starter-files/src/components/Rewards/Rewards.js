@@ -1,3 +1,4 @@
+import { createAlchemyWeb3 } from "@alch/alchemy-web3";
 import React, { useEffect, useState } from "react";
 import { useMoralis, useMoralisWeb3Api } from "react-moralis";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ const initData = {
 };
 
 const Rewards = () => {
+  const web3 = createAlchemyWeb3(process.env.REACT_APP_ALCHEMY_KEY);
   const [NFTs, setNFTs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const Web3Api = useMoralisWeb3Api();
@@ -19,10 +21,11 @@ const Rewards = () => {
     try {
       setIsLoading(true);
       const options = {
-        chain: "mumbai",
-        token_address: "0xAdB9fe0E415e4C8Ef41C4d0cC20C77e1cf55DE3F",
+        chain: process.env.REACT_APP_CHAIN,
+        address: process.env.REACT_APP_STAKING_ADDRESS,
       };
-      const myCollections = await Web3Api.account.getNFTsForContract(options);
+
+      const myCollections = await Web3Api.account.getNFTs(options);
 
       console.log(myCollections);
       setNFTs(myCollections.result);
@@ -33,19 +36,41 @@ const Rewards = () => {
     }
   };
 
+  const unstake = async (tokenId) => {
+    const rewardAddress = process.env.REACT_APP_REWARD_ADDRESS;
+    const stakingAddress = process.env.REACT_APP_STAKING_ADDRESS;
+
+    try {
+      const contractABI = require("../../contracts/artifacts/contracts/NFTStaking.sol/NFTStaking.json");
+      const abi = contractABI.abi;
+      window.contract = await new web3.eth.Contract(abi, stakingAddress);
+
+      const transactionParameters = {
+        to: stakingAddress,
+        from: window.ethereum.selectedAddress,
+        data: window.contract.methods.unstake([parseInt(tokenId)]).encodeABI(),
+      };
+
+      try {
+        const txHash = await window.ethereum.request({
+          method: "eth_sendTransaction",
+          params: [transactionParameters],
+        });
+
+        console.log("success to unstaking address", txHash);
+      } catch (error) {
+        console.log(error);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     if (!isWeb3Enabled) return;
 
     fetchStakedNFTs();
   }, [isWeb3Enabled]);
-
-  const [data, setData] = useState({
-    data: {},
-    tabData_1: [],
-    tabData_2: [],
-    tabData_3: [],
-    filterData: [],
-  });
 
   return (
     <section className="activity-area load-more">
@@ -58,19 +83,18 @@ const Rewards = () => {
                 <span>{initData.preHeading}</span>
                 <h3 className="mt-3 mb-0">{initData.heading}</h3>
               </div>
-              <div className="intro-btn">
-                <a className="btn content-btn" href="/explore-3">
-                  {initData.btn_1}
-                </a>
-              </div>
             </div>
           </div>
         </div>
 
         <div className="row items">
-          {NFTs.length === 0 ? (
-            <div className="col-12 col-sm-6 col-lg-3 text-center p-4">
-              No Staked NFTs now.
+          {isLoading ? (
+            <div className="flex flex-col col-12 col-sm-12 col-lg-12 text-center p-4">
+              Loading...
+            </div>
+          ) : NFTs.length === 0 ? (
+            <div className="flex flex-col col-12 col-sm-12 col-lg-12 text-center p-4">
+              <div>No Staked NFTs for now</div>
               <a className="btn btn-bordered-white m-4" href="/author">
                 <i className="icon-note mr-2" />
                 {"Let's stake!"}
@@ -85,31 +109,24 @@ const Rewards = () => {
                 <div key={`exo_${idx}`} className="col-12 col-sm-6 col-lg-3">
                   <div className="card">
                     <div className="image-over">
-                      <Link
-                        to={`/item-details/${item.token_address}`}
-                        state={{
-                          tokenId: item.token_id,
-                          createdAt: item.created_at,
-                          tokenAddress: item.token_address,
-                          imgUrl: ipfsUrl,
-                          blockNumber: item.block_number_minted,
-                          tokenHash: item.token_hash,
-                        }}
-                      >
-                        <a href="#">
-                          <img
-                            className="card-img-top"
-                            src={meta.image ? ipfsUrl : defaultImg}
-                            alt=""
-                          />
-                        </a>
-                      </Link>
+                      <a href="#">
+                        <img
+                          className="card-img-top"
+                          src={meta.image ? ipfsUrl : defaultImg}
+                          alt=""
+                        />
+                      </a>
                     </div>
                     {/* Card Caption */}
                     <div className="card-caption col-12 p-0">
                       {/* Card Body */}
                       <div className="card-body">
-                        <a href="/item-details">
+                        <a
+                          href="#"
+                          onClick={() => {
+                            unstake(item.token_id);
+                          }}
+                        >
                           <h5 className="mb-0">{meta.name}</h5>
                         </a>
 

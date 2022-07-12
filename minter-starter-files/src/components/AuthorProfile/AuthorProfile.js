@@ -13,7 +13,7 @@ const AuthorProfile = () => {
           <div className="col-12 col-md-8 col-lg-7">
             {/* Intro */}
             <div className="intro text-center">
-              <h3 className="mt-3 mb-0">My Collections</h3>
+              <h3 className="mt-3 mb-0">My Co</h3>
             </div>
           </div>
         </div>
